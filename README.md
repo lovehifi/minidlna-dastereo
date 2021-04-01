@@ -29,7 +29,7 @@ SSH
 #2./ **Extract**
 > tar -xf /root/minidlna-1.3.0-1-armv7h.pkg.tar.xz --overwrite -C /
 > 
-> tar -xf /rootglibc-2.32-2-armv7h.pkg.tar.xz --overwrite -C /
+> tar -xf /root/glibc-2.32-2-armv7h.pkg.tar.xz --overwrite -C /
 >
 > tar -xf /root/libexif-0.6.22-1-armv7h.pkg.tar.xz --overwrite -C /
 >
