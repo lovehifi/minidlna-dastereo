@@ -53,6 +53,3 @@ Change folder music...
 > systemctl status minidlna.service
 ####
 ####
-
-Just temp backup: pacman -Syy >> pacman -Syu --ignore filesystem,bash >> pacman -S bash >> pacman -Su
-
