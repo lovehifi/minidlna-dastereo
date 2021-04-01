@@ -2,6 +2,10 @@
 
 # MinDLNA to dimas-dastereo  setup instructions
 
+SSH
+> User: root
+> 
+> Pass: dastereO
 
 ###### Step by Step
 
