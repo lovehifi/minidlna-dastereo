@@ -38,9 +38,11 @@ SSH
 #3./ **Config**
 
 WinSCP edit file
->  /etc/minidlna.conf
-Change folder music...
-> 
+>  /etc/mi#idlna.conf
+Add #
+> #user=minidlna
+Change media_dir
+> media_dir=/mnt
 
 ####
 
