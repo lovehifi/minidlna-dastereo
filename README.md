@@ -17,7 +17,9 @@
 ####
 #2./ **WinSCP Copy 3 file from PC to Pi /root/**
 > minidlna-1.3.0-1-armv7h.pkg.tar.xz
+>
 > glibc-2.32-2-armv7h.pkg.tar.xz
+>
 > libexif-0.6.22-1-armv7h.pkg.tar.xz
 ####
 ####
