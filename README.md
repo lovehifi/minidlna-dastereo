@@ -39,10 +39,13 @@ SSH
 
 WinSCP edit file
 >  /etc/mi#idlna.conf
+>  
 Add #
 > #user=minidlna
+> 
 Change media_dir
 > media_dir=/mnt
+> 
 
 ####
 
