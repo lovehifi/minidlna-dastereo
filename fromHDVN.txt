@@ -1,0 +1,154 @@
+http://www.hdvietnam.com/threads/raspberry-pi-rune-audio-mot-trai-nghiem-nghe-nhac-moi.1174389/page-1026
+Để fix vụ cover bé tí 160x160 của minidlna. Các bước như sau. Tút này em chạy trên pi4 v1.1 / Buster lite 5.4.83 (2021-01-11).
+
+Mã:
+pi@raspberrypi:~ $ uname -a
+Linux raspberrypi 5.4.83-v7l+ #1379 SMP Mon Dec 14 13:11:54 GMT 2020 armv7l GNU/Linux
+
+pi@raspberrypi:~ $ cat /proc/cpuinfo | grep Model
+Model  : Raspberry Pi 4 Model B Rev 1.1
+
+pi@raspberrypi:~ $ cat /proc/meminfo | grep Mem
+MemTotal:  3919796 kB
+MemFree:  2849096 kB
+MemAvailable:  3645708 kB
+1. Uninstall minidlna nếu đã install trước đó:
+
+Mã:
+sudo apt-get purge minidlna -y
+sudo apt-get remove minidlna
+sudo apt-get autoremove -y
+2. Download 2 file này về pi. Mặc nhiên là /home/pi
+
+minidlna-1.2.1.tar.gz
+
+Mã:
+wget https://sourceforge.net/projects/minidlna/files/minidlna/1.2.1/minidlna-1.2.1.tar.gz
+
+Mirror:
+
+wget "https://drive.google.com/uc?export=download&id=1CxkYoMsSuANV9Ye1L-9FTNIjPr1-omys" -O minidlna-1.2.1.tar.gzminidlna-1.2.1-cover-resize.patch
+
+Mã:
+wget https://gist.github.com/grigorye/d30bbed518226e44a18eec75f6f6159e/raw/78a5e3261cc6c88bbf901cd1adac26ec6b2f978b/minidlna-1.2.1-cover-resize.patch
+
+Mirror:
+
+wget "https://drive.google.com/uc?export=download&id=1LPz61FHqi1XcNQtPJfVooi3euqJUK-im" -O minidlna-1.2.1-cover-resize.patch
+3. Chạy các lệnh sau:
+
+Mã:
+sudo apt-get update
+
+sudo apt-get install build-essential autopoint debhelper dh-autoreconf gcc libavutil-dev libavcodec-dev libavformat-dev libjpeg-dev libsqlite3-dev libexif-dev libid3tag0-dev libogg-dev libvorbis-dev libflac-dev -y
+
+tar -zxvf minidlna-1.2.1.tar.gz
+cd minidlna-1.2.1
+
+cp /home/pi/minidlna-1.2.1-cover-resize.patch ./
+
+patch -p1 < minidlna-1.2.1-cover-resize.patch
+
+./configure
+make
+sudo make install
+sudo cp ./minidlna.conf /etc/
+
+sudo cp linux/minidlna.init.d.script /etc/init.d/minidlna
+sudo chmod +x /etc/init.d/minidlna
+sudo update-rc.d minidlna defaults
+sudo mkdir /var/cache/minidlna4. Edit file /etc/minidlna.conf như sau. /mnt/NAS là nơi chứa nhạc:
+
+Mã:
+media_dir=A,/mnt/NAS
+resize_covers=no
+friendly_name=minidlna
+db_dir=/var/cache/minidlna
+log_dir=/var/log
+log_level=no
+inotify=yes
+root_container=M
+wide_links=yes
+5. Start và stop service:
+
+Mã:
+sudo service minidlna stop
+
+sudo service minidlna start
+Cập nhật library - forces a rescan:
+
+Mã:
+sudo /usr/local/sbin/minidlnad -r
+Cập nhật full library - forces a rebuild:
+
+Mã:
+sudo /usr/local/sbin/minidlnad -R
+6. Test:
+
+Mã:
+pi@raspberrypi:~ $ /usr/local/sbin/minidlnad -V
+Version 1.2.1
+Mã:
+pi@raspberrypi:~ $ service minidlna status
+● minidlna.service - LSB: DLNA/UPnP-AV media server
+  Loaded: loaded (/etc/init.d/minidlna; generated)
+  Active: active (running) since Thu 2021-02-11 08:51:25 +07; 3min 30s ago
+  Docs: man:systemd-sysv-generator(8)
+  Process: 573 ExecStart=/etc/init.d/minidlna start (code=exited, status=0/SUCCESS)
+  Tasks: 3 (limit: 4915)
+  CGroup: /system.slice/minidlna.service
+  ├─590 /usr/local/sbin/minidlnad -f /etc/minidlna.conf
+  └─621 /usr/local/sbin/minidlnad -f /etc/minidlna.conf
+
+Feb 11 08:51:24 raspberrypi systemd[1]: Starting LSB: DLNA/UPnP-AV media server...
+Feb 11 08:51:25 raspberrypi minidlna[573]: Starting minidlna: minidlna.
+Feb 11 08:51:25 raspberrypi systemd[1]: Started LSB: DLNA/UPnP-AV media server.
+Mã:
+http://your_ip:8200/
+7. Edit file /etc/sysctl.conf thêm vào phía dưới:
+
+Mã:
+fs.inotify.max_user_watches = 65536
+Mã:
+sudo reboot
+Vậy là xong ạ!
+
+Lưu ý:
+
+@@@ Ở bước 2. Nếu thích mình có thể patch thêm 2 cái nữa:
+
+- minidlna-1.2.1-add-support-dsd.patch | Support DSD
+
+Mã:
+wget "https://drive.google.com/uc?export=download&id=1zO1NrOjxiCmtOTvgYceyVskX1mXwzrt8" -O minidlna-1.2.1-add-support-dsd.patch
+- favicon-support-v1.2.1.patch | Fix lỗi requests favicon.ico 404 error (Không quan trọng lắm)
+
+Mã:
+wget "https://drive.google.com/uc?export=download&id=1M-oOJJ2mvaZQ_e3lbk_axclHMy0ZUwoV" -O favicon-support-v1.2.1.patch
+Cần chạy thêm 2 lệnh này ở bước 3:
+
+Mã:
+patch -p1 < minidlna-1.2.1-add-support-dsd.patch
+
+patch -p1 < favicon-support-v1.2.1.patch
+@@@ Cách bên trên tạo service theo kiểu cũ init.d. Nếu thích mình có thể cho nó chạy theo cách systemd minidlna.service. Em sẽ test sau ạ.
+
+More info: Service init.d scripts vs /etc/systemd/system vs /usr/lib/systemd/system
+
+Trước và sau khi fix covers:
+
+[​IMG]
+
+[​IMG]​
+
+More info:
+
+http://m.blog.naver.com/parkmino45/221099945434
+
+https://github.com/ywhs/linux-software/releases/tag/1.2.1
+
+https://octroom.exblog.jp/21092409/
+
+https://melgrubb.com/2016/12/11/rphs-v2-minidlna/
+
+https://sourceforge.net/p/minidlna/patches/152/
