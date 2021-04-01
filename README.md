@@ -1,4 +1,3 @@
-# minidlna-dastereo
 ### Hi Audiophile 👋
 
 # MinDLNA to dimas-dastereo  setup instructions
