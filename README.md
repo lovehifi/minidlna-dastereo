@@ -38,7 +38,7 @@ SSH
 #3./ **Config**
 
 WinSCP edit file
->  /etc/mi#idlna.conf
+>  /etc/minidlna.conf
 >  
 Add #
 > #user=minidlna
