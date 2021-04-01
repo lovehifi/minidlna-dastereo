@@ -1,0 +1,100 @@
+diff -ur minidlna-1.2.1/albumart.c minidlna-1.2.1-cover-resize/albumart.c
+--- minidlna-1.2.1/albumart.c	2017-08-24 19:28:25.000000000 +0200
++++ minidlna-1.2.1-cover-resize/albumart.c	2017-09-10 00:34:02.000000000 +0200
+@@ -67,15 +67,18 @@
+ 	strncpyt(cache_dir, cache_file, sizeof(cache_dir));
+ 	make_dir(dirname(cache_dir), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+ 
++	if( runtime_vars.cover_size <= 0 )
++		return image_save_to_jpeg_file(imsrc, cache_file);
++
+ 	if( imsrc->width > imsrc->height )
+ 	{
+-		dstw = 160;
+-		dsth = (imsrc->height<<8) / ((imsrc->width<<8)/160);
++		dstw = runtime_vars.cover_size;
++		dsth = (imsrc->height<<8) / ((imsrc->width<<8) / runtime_vars.cover_size);
+ 	}
+ 	else
+ 	{
+-		dstw = (imsrc->width<<8) / ((imsrc->height<<8)/160);
+-		dsth = 160;
++		dstw = (imsrc->width<<8) / ((imsrc->height<<8) / runtime_vars.cover_size);
++		dsth = runtime_vars.cover_size;
+ 	}
+ 	imdst = image_resize(imsrc, dstw, dsth);
+ 	if( !imdst )
+@@ -216,7 +219,8 @@
+ 	width = imsrc->width;
+ 	height = imsrc->height;
+ 
+-	if( width > 160 || height > 160 )
++	if( runtime_vars.cover_size > 0 &&
++		( width > runtime_vars.cover_size || height > runtime_vars.cover_size ) )
+ 	{
+ 		art_path = save_resized_album_art(imsrc, path);
+ 	}
+@@ -337,7 +341,8 @@
+ found_file:
+ 			width = imsrc->width;
+ 			height = imsrc->height;
+-			if( width > 160 || height > 160 )
++			if( runtime_vars.cover_size > 0 && 
++				( width > runtime_vars.cover_size || height > runtime_vars.cover_size ) )
+ 				art_file = save_resized_album_art(imsrc, file);
+ 			else
+ 				art_file = strdup(file);
+diff -ur minidlna-1.2.1/minidlna.c minidlna-1.2.1-cover-resize/minidlna.c
+--- minidlna-1.2.1/minidlna.c	2017-08-24 19:28:25.000000000 +0200
++++ minidlna-1.2.1-cover-resize/minidlna.c	2017-09-10 00:34:02.000000000 +0200
+@@ -538,6 +538,7 @@
+ 	runtime_vars.max_connections = 50;
+ 	runtime_vars.root_container = NULL;
+ 	runtime_vars.ifaces[0] = NULL;
++	runtime_vars.cover_size = 160; /* DLNA standart value */
+ 
+ 	/* read options file first since
+ 	 * command line arguments have final say */
+@@ -752,6 +753,9 @@
+ 			if (strcasecmp(ary_options[i].value, "beacon") == 0)
+ 				CLEARFLAG(TIVO_BONJOUR_MASK);
+ 			break;
++		case RESIZE_COVER_ART:
++			runtime_vars.cover_size = atoi(ary_options[i].value);
++			break;
+ 		default:
+ 			DPRINTF(E_ERROR, L_GENERAL, "Unknown option in file %s\n",
+ 				optionsfile);
+diff -ur minidlna-1.2.1/minidlnatypes.h minidlna-1.2.1-cover-resize/minidlnatypes.h
+--- minidlna-1.2.1/minidlnatypes.h	2017-08-24 19:28:25.000000000 +0200
++++ minidlna-1.2.1-cover-resize/minidlnatypes.h	2017-09-10 00:34:02.000000000 +0200
+@@ -49,6 +49,7 @@
+ 	int port;	/* HTTP Port */
+ 	int notify_interval;	/* seconds between SSDP announces */
+ 	int max_connections;	/* max number of simultaneous conenctions */
++	int cover_size; /* max cover width or height */
+ 	const char *root_container;	/* root ObjectID (instead of "0") */
+ 	const char *ifaces[MAX_LAN_ADDR];	/* list of configured network interfaces */
+ };
+diff -ur minidlna-1.2.1/options.c minidlna-1.2.1-cover-resize/options.c
+--- minidlna-1.2.1/options.c	2017-08-24 19:28:25.000000000 +0200
++++ minidlna-1.2.1-cover-resize/options.c	2017-09-10 00:36:23.000000000 +0200
+@@ -65,6 +65,7 @@
+ 	{ FORCE_SORT_CRITERIA, "force_sort_criteria" },
+ 	{ MAX_CONNECTIONS, "max_connections" },
+ 	{ MERGE_MEDIA_DIRS, "merge_media_dirs" },
++	{ RESIZE_COVER_ART, "resize_covers" },
+ 	{ WIDE_LINKS, "wide_links" },
+ 	{ TIVO_DISCOVERY, "tivo_discovery" },
+ };
+diff -ur minidlna-1.2.1/options.h minidlna-1.2.1-cover-resize/options.h
+--- minidlna-1.2.1/options.h	2017-08-24 19:28:25.000000000 +0200
++++ minidlna-1.2.1-cover-resize/options.h	2017-09-10 00:37:22.000000000 +0200
+@@ -58,6 +58,7 @@
+ 	FORCE_SORT_CRITERIA,		/* force sorting by a given sort criteria */
+ 	MAX_CONNECTIONS,		/* maximum number of simultaneous connections */
+ 	MERGE_MEDIA_DIRS,		/* don't add an extra directory level when there are multiple media dirs */
++	RESIZE_COVER_ART,		/* resize cover art to comply with DLNA spec */
+ 	WIDE_LINKS,			/* allow following symlinks outside the defined media_dirs */
+ 	TIVO_DISCOVERY,			/* TiVo discovery protocol: bonjour or beacon. Defaults to bonjour if supported */
+ };
